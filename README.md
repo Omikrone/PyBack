@@ -17,7 +17,7 @@ Or install it manually.
 
 If you want to create executables for Windows, use pip and install te requirements:
 ```bash
-pip3 install requirements.txt
+pip3 install -r requirements.txt
 ```
 
 **Troubleshot:** It may be possible that when you install PyInstaller you can't launch it. In this case, you have to install [the wheel file](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyinstaller) manually and then run:
