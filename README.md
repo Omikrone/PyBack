@@ -42,7 +42,7 @@ There is for the moment 3 main commands available:
 ``` bash
 - upload : upload a file to the client.
 - download : download a file from the client.
-- cmd : open an interactive shell on the clients machine.
+- cmd : open an interactive shell on the client's machine.
 ```
 
 Use 'help' to see the commands and 'exit' to leave the session.
