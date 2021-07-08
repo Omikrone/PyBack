@@ -51,4 +51,5 @@ Use 'help' to see the commands and 'exit' to leave the session.
 ## Disclaimer and further information
 
 This program is for educational purposes only! I take no responsibility or liability for own personal use.
+
 Inspired by: [Oseid on GitHub](https://github.com/Oseid/python-reverse-shell)
