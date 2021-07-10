@@ -1,4 +1,4 @@
-# PyBack v1.1
+# PyBack v1.2
 
 PyBack is a really simple script written in python that allows you to remote a computer via reverse tcp.
 
@@ -38,11 +38,12 @@ You can then set up the client and the listener with the differents options.
 
 ## Remote control
 
-There is for the moment 3 main commands available:
+There is for the moment 4 main commands available:
 ``` bash
 - upload : upload a file to the client.
 - download : download a file from the client.
 - cmd : open an interactive shell on the clients machine.
+- keylogger [start/stop] : start or stop a keylogger and get the file with the keylogs.
 ```
 
 Use 'help' to see the commands and 'exit' to leave the session.

