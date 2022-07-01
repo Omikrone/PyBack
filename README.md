@@ -1,6 +1,6 @@
-# PyBack v1.2
+# PyBack v0.2
 
-PyBack is a really simple script written in python that allows you to remote a computer via reverse tcp.
+PyBack is a simple script written in python that allows you to control a computer in reverse tcp.
 
 
 
@@ -9,44 +9,33 @@ PyBack is a really simple script written in python that allows you to remote a c
 Use git clone to install it:
 ```bash
 git clone https://github.com/Omikrone/PyBack.git
+cd Pyback
 ```
-Or install it manually.
 
-
-## Requirements
-
-If you want to create executables for Windows, use pip and install te requirements:
+Then, you have to install the requirements with the following command (according to your os):
 ```bash
-pip3 install -r requirements.txt
-```
-
-**Troubleshot:** It may be possible that when you install PyInstaller you can't launch it. In this case, you have to install [the wheel file](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyinstaller) manually and then run:
-```bash
-pip3 install PyInstaller‑3.6‑py2.py3‑none‑any.whl
+python3 -m pip install -r requirements.txt
 ```
 
 
-## Usage and Set Up
+## Usage and setup
 
 Change directory and launch pyback.py:
 ```bash
 cd PyBack
 python3 pyback.py
 ```
-You can then set up the client and the listener with the differents options.
+You will have the choice
 
 
-## Remote control
+## Features
 
-There is for the moment 4 main commands available:
-``` bash
-- upload : upload a file to the client.
-- download : download a file from the client.
-- cmd : open an interactive shell on the clients machine.
-- keylogger [start/stop] : start or stop a keylogger and get the file with the keylogs.
-```
-
-Use 'help' to see the commands and 'exit' to leave the session.
+The main features are the following:
+* Upload files to the client
+* Download files from the client
+* Capture keystrokes on the client's computer
+* Open a simple remote shell
+* Set the client's process in background to connect to it later
 
 
 ## Disclaimer and further information

