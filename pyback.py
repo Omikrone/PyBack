@@ -161,9 +161,14 @@ def create():  # configure the client with ip and port
         file.write(''.join(content))
 
     if exe == 'y':
+        icon = input("Enter the path of the icon (leave blank for default icon): ")
+        if icon == ' ':
+            command = "pyinstaller -F data/client.py -c --distpath exe"
+        else:
+            command = f"pyinstaller -F data/client.py -c --distpath exe --icon={icon}"
         os.system(clear)
         print('Creating the executable... This may take a while.')
-        os.system("pyinstaller -F data/client.py -c --distpath exe")
+        os.system(command)
         print("Executable file successfully created in folder 'exe'!\n")
     else:
         print("Python file successfully created!\n")
