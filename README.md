@@ -39,7 +39,7 @@ Currently, the executable file is detected by 20/72 antivirus programs:
 
 ![Image of Virustotal scan report](virustotal.png)
 
-I will work on this in the next versions to improve score.
+I will work on this in the next versions to improve the score.
 
 
 ## Disclaimer and further information
